@@ -57,7 +57,8 @@ Throughout this journey, the app will evolve to include:
 
 ## **Tech Stack** 🖥️
 
-- **Languages:** Python/JavaScript/Node.js (Specify your app's language)
+- **Languages:** For now:  HTML/CSS/JavaScript
+- **Frameworks:** For now:  vue.js
 - **Tools:** GitHub Actions, Terraform, Docker, Kubernetes, Prometheus, Grafana, AWS/GCP/Azure
 - **Cloud Providers:** AWS, GCP, or Azure (to be finalized)
 
