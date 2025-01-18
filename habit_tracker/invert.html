@@ -1,0 +1,138 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Inverter - test</title>
+</head>
+<body>
+    <input type="file" id="imageLoader" accept="image/*" />
+    <canvas id="canvas" style="border:1px solid black;"></canvas>
+
+    <script>
+        const imageLoader = document.getElementById('imageLoader');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        imageLoader.addEventListener('change', handleImage, false);
+
+        function handleImage(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Set canvas size to match the image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // Draw the image onto the canvas
+                    ctx.drawImage(img, 0, 0);
+
+                    // Divide the image into 31 squares
+                    const totalSquares = 30;
+                    const cols = Math.ceil(Math.sqrt(totalSquares)); // Number of columns
+                    const rows = Math.ceil(totalSquares / cols); // Number of rows
+                    const squareWidth = canvas.width / cols;
+                    const squareHeight = canvas.height / rows;
+
+                    // Example usage: Split squares 0, 5, and 10 into tasks and invert specific tasks
+                    splitSquaresIntoTasks(30, cols, squareWidth, squareHeight, {
+                        0: 4, // 4 tasks for square 0
+                        5: 2, // 2 tasks for square 5
+                        10: 8, // 8 tasks for square 10
+                        20: 8
+                    }, {
+                        0: [2,3], // Invert task 2 of square 0
+                        5: [1], // Invert task 1 of square 5
+                        10: [3, 5], // Invert tasks 3 and 5 of square 10
+                        15:[0],
+                        25: [0],
+                        20:[0,1,2,3,4,5,6,7]
+                    });
+
+                    // Draw grid overlay for visualization
+                    for (let row = 0; row < rows; row++) {
+                        for (let col = 0; col < cols; col++) {
+                            const x = col * squareWidth;
+                            const y = row * squareHeight;
+
+                            ctx.strokeStyle = "black";
+                            ctx.lineWidth = 0.1;
+                            // ctx.strokeRect(x, y, squareWidth, squareHeight);
+                        }
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function splitSquaresIntoTasks(squareCount, cols, squareWidth, squareHeight, tasksPerSquare, invertTasks) {
+    for (let index = 0; index <squareCount; index ++) {
+        const col = index % cols; // Column number
+        const row = Math.floor(index / cols); // Row number
+        const x = col * squareWidth;
+        const y = row * squareHeight;
+
+        const numTasks = tasksPerSquare[index] || 0; // Default to 0 tasks if not specified
+
+        if (numTasks === 0) {
+            // If no tasks, invert the whole square if specified
+            if (invertTasks[index] && invertTasks[index].includes(0)) {
+                invertTask(x, y, squareWidth, squareHeight);
+            }
+
+            // Optionally draw a border around the square
+            // ctx.strokeStyle = "black";
+            // ctx.lineWidth = 0.1;
+            // ctx.strokeRect(x, y, squareWidth, squareHeight);
+        } else {
+            // Split into tasks as before
+            const taskWidth = squareWidth / Math.ceil(Math.sqrt(numTasks));
+            const taskHeight = squareHeight / Math.ceil(Math.sqrt(numTasks));
+
+            for (let i = 0; i < numTasks; i++) {
+                if (tasksPerSquare[index] == invertTasks[index].length){
+                    console.log('square index : '+ index + ' has all its tasks marked to be inverted');
+                    invertTask(x,y,squareWidth,squareHeight);
+                    break;
+                }
+                const taskCol = i % Math.ceil(Math.sqrt(numTasks));
+                const taskRow = Math.floor(i / Math.ceil(Math.sqrt(numTasks)));
+
+                const taskX = x + taskCol * taskWidth;
+                const taskY = y + taskRow * taskHeight;
+
+                // Check if this task needs inversion
+                if (invertTasks[index] && invertTasks[index].includes(i)) {
+                    invertTask(taskX, taskY, taskWidth, taskHeight);
+                }
+
+                // Draw task sub-square
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 1;
+                // ctx.strokeRect(taskX, taskY, taskWidth, taskHeight);     
+            }
+        }
+    }
+}
+
+        function invertTask(x, y, width, height) {
+            // Get the image data for the task
+            const imageData = ctx.getImageData(x, y, width, height);
+            const pixels = imageData.data; // Pixel data array (RGBA values)
+
+            // Invert the colors (alternative "uglify" logic can be implemented here)
+            for (let i = 0; i < pixels.length; i += 4) {
+                pixels[i] = 255 - pixels[i ];        // Dim the Red channel
+                pixels[i + 1] = 255 - pixels[i + 1]; // Dim the Green channel
+                pixels[i + 2] = 255 - pixels[i + 2]; // Invert the Blue channel
+                // Alpha (pixels[i + 3]) remains unchanged
+            }
+
+            // Put the modified image data back onto the canvas
+            ctx.putImageData(imageData, x, y);
+        }
+    </script>
+</body>
+</html>
